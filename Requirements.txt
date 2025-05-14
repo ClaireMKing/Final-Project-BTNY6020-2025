@@ -1,0 +1,8 @@
+tidyverse
+knitr
+ggplot2
+lmtest
+sandwich
+tseries
+car
+glmnet
