@@ -234,6 +234,8 @@ When checking the homoscedasticity assumption, there does not seem to be a lot o
 
 Even with the sandwich estimators, the Breusch-Pagan test still showed presence of heteroscedasticity. For our purposes of prediction, addressing this further is not completely necessary as we are mainly concerned with minimizing error on new data. Meanwhile, with inference, heteroscedasticity can inflate type 1 errors, cause your confidence intervals to be unreliable, and have biased standard errors. These are not major concerns in prediction, therefore we can continue on.
 
+The final assumption to consider is the independence of observations. This assumption can be challenging to assess directly; therefore, examining the covariates provides a practical approach. Multicollinearity has already been addressed by removing variables that were highly correlated, such as the minimum and maximum temperature values and variables related to rainy days. These covariates were either time-dependent or redundant. Additionally, because all observations are from the same year and there are no repeated measurements, the data can be reasonably assumed to meet the independence assumption.
+
 ## Variable Selection 
 
 ```{r}
@@ -254,19 +256,19 @@ out_backward_bic <- step(object = mod, direction = "backward",
 scope = formula(mod), trace = T, k = log(nrow(final_data)))
 summary(out_backward_bic) # -> lowest AIC of 8141.0, kept all covariates! 
 
-## Now with lasso 
-
-x <- model.matrix(~ clonesize + honeybee + bumbles + andrena + osmia +
-                    AverageOfUpperTRange + AverageRainingDays + fruitmass,
-                  data = blueberry_data)[, -1]
-
-lasso_fit <- glmnet(x = x, y = final_data$yield, alpha = 1, nlambda = 100)
-coef(lasso_fit) # -> maybe out take out bumbles and andrena, but i will keep them in 
+# ## Now with lasso 
+# 
+# x <- model.matrix(~ clonesize + honeybee + bumbles + andrena + osmia +
+#                     AverageOfUpperTRange + AverageRainingDays + fruitmass,
+#                   data = blueberry_data)[, -1]
+# 
+# lasso_fit <- glmnet(x = x, y = final_data$yield, alpha = 1, nlambda = 100)
+# coef(lasso_fit) # -> maybe out take out bumbles and andrena, but i will keep them in 
 
 
 ```
 
-Both backward and forward selection showed that the lowest AIC value kept all covariates in the model. When using lasso, it became known that we could take out bumbles and/or andrena, but we decided to keep them in due to the previous results.
+Both backward and forward selection showed that the lowest AIC value kept all covariates in the model. Therefore, we will keep all covariates in the model! 
 
 ## Hypothesis Testing 
 
@@ -282,12 +284,9 @@ summary(final_mod) #-> all are statistically significant
 summary(final_mod)$r.squared# -> fantastic!
 summary(final_mod)$adj.r.squared# -> fantastic! 
 
-rmse <- sqrt(mean(residuals(final_mod)^2))
-print(rmse)  # -> within acceptable range! 
-
 ```
 
-From our final model, we can see that each covariate is statistically significant. This is further validated through the high values of R^2^ and adjusted R\^2. Finally, we calculated the RMSE to be 181.3048, which is in the acceptable range!
+From our final model, we can see that each covariate is statistically significant. This is further validated through the high values of R^2 and adjusted R\^2.
 
 ## Cross-Validation  
 
@@ -366,3 +365,8 @@ All in all, pollinators are significant contributors to predicting yield. This i
 In the future, it would be informative to gather more data on different pollinators, such as wasps, to better understand if this predictability is limited to bees or not. Also, it would be interesting to try this study in different crops to see how this outcome compares to others.
 
 # References 
+
+Bettache, Nayel. "Github Tutorial" BTRY 6020, May 05, Cornell University. Tutorial.
+Bettache, Nayel. "Lectures 1 - 26, Labs 1 - 12" BTRY 6020, January 27 - May 05, Cornell University. Class Lecture.
+Shahane, Saurabh. “Wild Blueberry Yield Prediction.” Kaggle, 26 Feb. 2021, www.kaggle.com/datasets/saurabhshahane/wild-blueberry-yield-prediction?resource=download. 
+
