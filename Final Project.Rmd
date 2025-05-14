@@ -3,8 +3,8 @@ title: "Final Project Analysis"
 author: "Claire King"
 date: "`r Sys.Date()`"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Introduction
@@ -19,9 +19,11 @@ With this data, we hope to evaluate the predictive ability of these pollinators 
 
 # Methods
 
-For this analysis, we want to do linear regression to try and see if predictability is majorly influence by the previously mentioned pollinators and 11 other covariates.
+For this analysis, we want to do a linear regression to  see if predictability is majorly influenced by the previously mentioned pollinators and 11 other covariates.
 
 ## Data Exploration 
+
+We will first load in the requirements to run this analysis. All packages are able to be run on the most updated version of RStudio (v 2025.05.0-496). 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -34,6 +36,9 @@ library(tseries)
 library(car)
 library(glmnet)
 ```
+
+Next, the data must be loaded in, then exploratory data analysis will be conducted through the use of head(), summary(), and str(). The head function gives a quick view into the rows and columns that are in the data frame. When this is run on the raw data, it comes to attention that the first column is not needed for analysis. 
+Through the use of the summary and str functions, we are able to see that all of the columns are numeric, which makes for easier analysis. Additionally, we are able to view the spread of the data to get a preview into the variation present and where the means are. 
 
 ```{r}
 ## Loading data and cleaning 
@@ -50,7 +55,7 @@ str(blueberry_data)
 
 ```
 
-As we can see from the summary table above, all covariates are numerical variables. However, it is important to notice that some predictors seem to be related to one another, such as MaxOfUpperTRange and MinOfUpperTRange. This might pose issues in our further analysis.
+It is important to notice that some predictors seem to be related to one another, such as MaxOfUpperTRange and MinOfUpperTRange. This might pose issues in our further analysis.
 
 Now that we have a general understanding of the format of our data, we must explore the distributions and correlations between the predictors themselves.
 
@@ -116,23 +121,28 @@ pairs(blueberry_data[, 9:16])
 
 ```
 
-To begin, we would like to visualize the distributions through histograms. However, as seen through the first for loop, we need variable bin sizes to accomplish this. Therefore, the next step of ggplot strings edits the bin size of each predictor to fit its need. From these histograms, we are mostly satisfied with the distributions that are present! We must note the presence of a few outliers in fruitset and fruitmass.
+To begin, we would like to visualize the distributions through histograms (geom_histogram()). However, as seen through the first for loop, we need variable bin sizes to accomplish this. Therefore, the next step of ggplot strings edits the bin size of each predictor to fit its need. From these histograms, we are mostly satisfied with the distributions that are present! We must note the presence of a few outliers in fruitset and fruitmass.
 
-Next, we plotted all covariates against one another using the pairs() function. Most of the graphs are uninformative, besides those that are associated with fruitset, fruitmass, and seeds, which all seem to have a very strong positive correlation.
+Next, we plotted all covariates against one another using the pairs() function. Most of the graphs are not very informative, besides those that are associated with fruitset, fruitmass, and seeds, which all seem to have a very strong positive correlation.
+
+From this exploratory data analysis, we now understand how the data is distributed, correlations between the covariates, and some aspects of our data to look out for. 
 
 ## Model Creation 
 
-Now that we have more understanding of our data, we can begin to fit our linear model.
+Now that we have more understanding of our data, we can begin to fit our linear model using the lm() function.
 
 ```{r}
 ## Creating the linear model 
 
-original_mod <- lm(yield ~ clonesize + honeybee + bumbles + andrena + osmia + MaxOfUpperTRange + MinOfUpperTRange + AverageOfUpperTRange + MaxOfLowerTRange + MinOfLowerTRange + AverageOfLowerTRange + RainingDays + AverageRainingDays + fruitset + fruitmass + seeds, data = blueberry_data)
+original_mod <- lm(yield ~ clonesize + honeybee + bumbles + andrena + osmia + 
+                     MaxOfUpperTRange + MinOfUpperTRange + AverageOfUpperTRange + 
+                     MaxOfLowerTRange + MinOfLowerTRange + AverageOfLowerTRange + RainingDays + 
+                     AverageRainingDays + fruitset + fruitmass + seeds, data = blueberry_data)
 summary(original_mod)
 
 ```
 
-From our first linear model, as predicted, we see that two covariates were not included due to perfect colinearity. This is concerning. Therefore, the first assumption that we wanted to test was multicolinearity.
+From our first linear model, as predicted, we see that two covariates were not included due to perfect colinearity. This is concerning. Therefore, the first assumption that we wanted to test was multicolinearity. To do this, we will use the alias() and vif() functions to help assess multicollinearity. 
 
 ## Testing Assumptions 
 
@@ -141,7 +151,9 @@ From our first linear model, as predicted, we see that two covariates were not i
 
 ## Multicollinearity assessment -> model creation has already taken out two variables due to almost perfect collinearity 
 
-sec_mod <- lm(yield ~ clonesize + honeybee + bumbles + andrena + osmia + MaxOfUpperTRange + MinOfUpperTRange + AverageOfUpperTRange + MaxOfLowerTRange +   RainingDays + AverageRainingDays + fruitset + fruitmass + seeds, data = blueberry_data)
+sec_mod <- lm(yield ~ clonesize + honeybee + bumbles + andrena + osmia + 
+                MaxOfUpperTRange + MinOfUpperTRange + AverageOfUpperTRange + MaxOfLowerTRange +   
+                RainingDays + AverageRainingDays + fruitset + fruitmass + seeds, data = blueberry_data)
 summary(sec_mod)
 
 alias(sec_mod)
@@ -149,7 +161,7 @@ vif(sec_mod)
 
 ```
 
-We can see that there are linearly dependent covariates in the original model. Therefore, we will take only keep the AverageOfUpperTRange and AverageOfLowerTRange to keep the most information without observing colinearity.
+We can see that there are linearly dependent covariates in the original model, this is from the numbers from the vif output being large. The ideal value is 1, with 1-5 being somewhat acceptable. To combat this issue , we will take only keep the AverageOfUpperTRange and AverageOfLowerTRange to keep the most information without observing collinearity.
 
 ```{r}
 
@@ -182,7 +194,7 @@ vif(final_mod) # -> yay! these all look great :)
 
 ```
 
-From the code chunk above, one can see that it took more refining to get to a model that did not violate the multicolinearity assumption. Additionally, keeping the average values, rather than the maximums and minimums, gives us the most information possible. Now, we can move on to checking the rest of the assumptions of linear regression.
+From the code chunk above, one can see that it took more refining to get to a model that did not violate the multicolinearity assumption. This can be seen through the vif values ranging from 1-3, which is suitable for this analysis. Additionally, keeping the average values, rather than the maximums and minimums, gives us the most information possible. Now, we can move on to checking the rest of the assumptions of linear regression.
 
 ```{r}
 
@@ -226,7 +238,7 @@ summary(final_mod)
 
 ```
 
-Beginning with linearity, I do not see the presence of a fan shape, or any other shape, which leads me to say that this assumption is upheld
+Beginning with linearity, I do not see the presence of a fan shape, or any other shape, in the residuals vs. fitted values plot, which leads me to say that this assumption is upheld
 
 For the normality assumption, the qqplot has some slight deviation in the line, but nothing concerning. The histogram also moves me to say that the normality assumption is upheld, due to its normal distribution.
 
@@ -235,6 +247,8 @@ When checking the homoscedasticity assumption, there does not seem to be a lot o
 Even with the sandwich estimators, the Breusch-Pagan test still showed presence of heteroscedasticity. For our purposes of prediction, addressing this further is not completely necessary as we are mainly concerned with minimizing error on new data. Meanwhile, with inference, heteroscedasticity can inflate type 1 errors, cause your confidence intervals to be unreliable, and have biased standard errors. These are not major concerns in prediction, therefore we can continue on.
 
 The final assumption to consider is the independence of observations. This assumption can be challenging to assess directly; therefore, examining the covariates provides a practical approach. Multicollinearity has already been addressed by removing variables that were highly correlated, such as the minimum and maximum temperature values and variables related to rainy days. These covariates were either time-dependent or redundant. Additionally, because all observations are from the same year and there are no repeated measurements, the data can be reasonably assumed to meet the independence assumption.
+
+Now that all the assumptions have been checked, we can move on to variable selection. 
 
 ## Variable Selection 
 
@@ -256,7 +270,7 @@ out_backward_bic <- step(object = mod, direction = "backward",
 scope = formula(mod), trace = T, k = log(nrow(final_data)))
 summary(out_backward_bic) # -> lowest AIC of 8141.0, kept all covariates! 
 
-# ## Now with lasso 
+# ## Now with lasso -> not necessary, but still did! 
 # 
 # x <- model.matrix(~ clonesize + honeybee + bumbles + andrena + osmia +
 #                     AverageOfUpperTRange + AverageRainingDays + fruitmass,
@@ -268,7 +282,8 @@ summary(out_backward_bic) # -> lowest AIC of 8141.0, kept all covariates!
 
 ```
 
-Both backward and forward selection showed that the lowest AIC value kept all covariates in the model. Therefore, we will keep all covariates in the model! 
+Utilizing the step() function allows us to add or subtract covariates from the model, making it very useful when testing between forward and backward selection. 
+Both backward and forward selection showed that the lowest AIC value kept all covariates in the model, with the lowest AICs being ~8140. Therefore, we will keep all covariates in the model! 
 
 ## Hypothesis Testing 
 
@@ -286,7 +301,7 @@ summary(final_mod)$adj.r.squared# -> fantastic!
 
 ```
 
-From our final model, we can see that each covariate is statistically significant. This is further validated through the high values of R^2 and adjusted R\^2.
+We then ran our final model through hypothesis testing with t-tests. From the summary table above, we can see that each covariate is statistically significant. This is further validated through the high values of R^2 and adjusted R\^2, which both have high values ~98%. 
 
 ## Cross-Validation  
 
@@ -367,6 +382,8 @@ In the future, it would be informative to gather more data on different pollinat
 # References 
 
 Bettache, Nayel. "Github Tutorial" BTRY 6020, May 05, Cornell University. Tutorial.
+
 Bettache, Nayel. "Lectures 1 - 26, Labs 1 - 12" BTRY 6020, January 27 - May 05, Cornell University. Class Lecture.
+
 Shahane, Saurabh. “Wild Blueberry Yield Prediction.” Kaggle, 26 Feb. 2021, www.kaggle.com/datasets/saurabhshahane/wild-blueberry-yield-prediction?resource=download. 
 
