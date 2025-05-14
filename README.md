@@ -22,7 +22,11 @@ Dataset source: [Kaggle - Wild Blueberry Yield Prediction](https://www.kaggle.co
 - `Requirements.txt` – Packages needed for this analysis
 
 ---
+## Analysis
 
+To run this analysis, the previously mentioned RMD file needs to be loaded into R with all packages installed from the Requirements.txt file. Once this is complete, the user will need to simply run the file either in its entirely or in sections as they see fit. Either method will give the same result. 
+
+---
 ## Outputs
 
 The output documents include:
@@ -35,4 +39,4 @@ The output documents include:
 
 ## Contact
 
-For questions or collaboration, reach out to Claire King at cmk323@cornell.edu. 
+For questions, please reach out to Claire King at cmk323@cornell.edu. 
